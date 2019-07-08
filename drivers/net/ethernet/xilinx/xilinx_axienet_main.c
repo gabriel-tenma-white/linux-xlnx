@@ -2349,6 +2349,8 @@ static int __maybe_unused axienet_mcdma_probe(struct platform_device *pdev,
 	struct resource dmares;
 	const char *str;
 
+	np = NULL;
+
 	ret = of_property_count_strings(pdev->dev.of_node, "xlnx,channel-ids");
 	if (ret < 0)
 		return -EINVAL;
@@ -2809,9 +2811,7 @@ static int axienet_probe(struct platform_device *pdev)
 				struct clk **ref_clk, struct clk **tmpclk) =
 					axienet_clk_init;
 	int ret = 0;
-#ifdef CONFIG_XILINX_AXI_EMAC_HWTSTAMP
-	struct device_node *np;
-#endif
+	struct device_node *np = NULL;
 	struct axienet_local *lp;
 	struct net_device *ndev;
 	const void *mac_addr;
@@ -3059,22 +3059,8 @@ static int axienet_probe(struct platform_device *pdev)
 			       &lp->eth_refclk, &lp->eth_dclk);
 	if (ret) {
 		dev_err(&pdev->dev, "Ethernet clock init failed %d\n", ret);
-		of_node_put(np);
-		goto free_netdev;
-	}
-	lp->dma_regs = devm_ioremap_resource(&pdev->dev, &dmares);
-	if (IS_ERR(lp->dma_regs)) {
-		dev_err(&pdev->dev, "could not map DMA regs\n");
-		ret = PTR_ERR(lp->dma_regs);
-		of_node_put(np);
-		goto free_netdev;
-	}
-	lp->rx_irq = irq_of_parse_and_map(np, 1);
-	lp->tx_irq = irq_of_parse_and_map(np, 0);
-	of_node_put(np);
-	if ((lp->rx_irq <= 0) || (lp->tx_irq <= 0)) {
-		dev_err(&pdev->dev, "could not determine irqs\n");
-		ret = -ENOMEM;
+		if(np)
+			of_node_put(np);
 		goto free_netdev;
 	}
 

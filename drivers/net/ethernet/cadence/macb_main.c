@@ -3465,6 +3465,7 @@ static int macb_clk_init(struct platform_device *pdev, struct clk **pclk,
 			 struct clk **hclk, struct clk **tx_clk,
 			 struct clk **rx_clk, struct clk **tsu_clk)
 {
+	struct macb_platform_data *pdata;
 	int err;
 
 	pdata = dev_get_platdata(&pdev->dev);
