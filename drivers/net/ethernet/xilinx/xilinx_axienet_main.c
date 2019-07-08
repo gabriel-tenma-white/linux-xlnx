@@ -3059,7 +3059,23 @@ static int axienet_probe(struct platform_device *pdev)
 			       &lp->eth_refclk, &lp->eth_dclk);
 	if (ret) {
 		dev_err(&pdev->dev, "Ethernet clock init failed %d\n", ret);
-		goto err_disable_clk;
+		of_node_put(np);
+		goto free_netdev;
+	}
+	lp->dma_regs = devm_ioremap_resource(&pdev->dev, &dmares);
+	if (IS_ERR(lp->dma_regs)) {
+		dev_err(&pdev->dev, "could not map DMA regs\n");
+		ret = PTR_ERR(lp->dma_regs);
+		of_node_put(np);
+		goto free_netdev;
+	}
+	lp->rx_irq = irq_of_parse_and_map(np, 1);
+	lp->tx_irq = irq_of_parse_and_map(np, 0);
+	of_node_put(np);
+	if ((lp->rx_irq <= 0) || (lp->tx_irq <= 0)) {
+		dev_err(&pdev->dev, "could not determine irqs\n");
+		ret = -ENOMEM;
+		goto free_netdev;
 	}
 
 	/* Retrieve the MAC address */

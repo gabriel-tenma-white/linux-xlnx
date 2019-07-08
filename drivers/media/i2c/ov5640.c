@@ -296,6 +296,7 @@ static const struct reg_value ov5640_init_setting_30fps_VGA[] = {
 	{0x501f, 0x00, 0, 0}, {0x4713, 0x03, 0, 0}, {0x4407, 0x04, 0, 0},
 	{0x440e, 0x00, 0, 0}, {0x460b, 0x35, 0, 0}, {0x460c, 0x22, 0, 0},
 	{0x3824, 0x02, 0, 0}, {0x482a, 0x06, 0, 0},
+	{0x4837, 0x0a, 0, 0},
 	{0x5000, 0xa7, 0, 0}, {0x5001, 0xa3, 0, 0}, {0x5180, 0xff, 0, 0},
 	{0x5181, 0xf2, 0, 0}, {0x5182, 0x00, 0, 0}, {0x5183, 0x14, 0, 0},
 	{0x5184, 0x25, 0, 0}, {0x5185, 0x24, 0, 0}, {0x5186, 0x09, 0, 0},
@@ -1879,16 +1880,17 @@ static int ov5640_set_mode_exposure_calc(struct ov5640_dev *sensor,
 static int ov5640_set_mode_direct(struct ov5640_dev *sensor,
 				  const struct ov5640_mode_info *mode)
 {
-	int ret;
-
 	if (!mode->reg_data)
 		return -EINVAL;
 
+<<<<<<< HEAD
 	/* Set PLL registers for new mode */
 	ret = ov5640_set_sclk(sensor, mode);
 	if (ret < 0)
 		return ret;
 
+=======
+>>>>>>> 1a05924366694d17a36e6b086d5bba1a8d74b977
 	/* Write capture setting */
 	return ov5640_load_regs(sensor, mode);
 }
@@ -1985,6 +1987,15 @@ static int ov5640_restore_mode(struct ov5640_dev *sensor)
 	if (ret < 0)
 		return ret;
 	sensor->last_mode = &ov5640_mode_init_data;
+<<<<<<< HEAD
+=======
+
+	ret = ov5640_mod_reg(sensor, OV5640_REG_SYS_ROOT_DIVIDER, 0x3f,
+			     (ilog2(OV5640_SCLK2X_ROOT_DIVIDER_DEFAULT) << 2) |
+			     ilog2(OV5640_SCLK_ROOT_DIVIDER_DEFAULT));
+	if (ret)
+		return ret;
+>>>>>>> 1a05924366694d17a36e6b086d5bba1a8d74b977
 
 	/* now restore the last capture mode */
 	ret = ov5640_set_mode(sensor);
@@ -2016,7 +2027,7 @@ static void ov5640_reset(struct ov5640_dev *sensor)
 	usleep_range(1000, 2000);
 
 	gpiod_set_value_cansleep(sensor->reset_gpio, 0);
-	usleep_range(5000, 10000);
+	usleep_range(20000, 25000);
 }
 
 static int ov5640_set_power_on(struct ov5640_dev *sensor)
@@ -2295,6 +2306,7 @@ static int ov5640_set_fmt(struct v4l2_subdev *sd,
 	struct ov5640_dev *sensor = to_ov5640_dev(sd);
 	const struct ov5640_mode_info *new_mode;
 	struct v4l2_mbus_framefmt *mbus_fmt = &format->format;
+	struct v4l2_mbus_framefmt *fmt;
 	int ret;
 
 	if (format->pad != 0)
@@ -2312,21 +2324,27 @@ static int ov5640_set_fmt(struct v4l2_subdev *sd,
 	if (ret)
 		goto out;
 
-	if (format->which == V4L2_SUBDEV_FORMAT_TRY) {
-		struct v4l2_mbus_framefmt *fmt =
-			v4l2_subdev_get_try_format(sd, cfg, 0);
+	if (format->which == V4L2_SUBDEV_FORMAT_TRY)
+		fmt = v4l2_subdev_get_try_format(sd, cfg, 0);
+	else
+		fmt = &sensor->fmt;
 
-		*fmt = *mbus_fmt;
-		goto out;
-	}
+	*fmt = *mbus_fmt;
 
+<<<<<<< HEAD
 	if (new_mode != sensor->current_mode ||
 	    mbus_fmt->code != sensor->fmt.code) {
 		sensor->fmt = *mbus_fmt;
+=======
+	if (new_mode != sensor->current_mode) {
+>>>>>>> 1a05924366694d17a36e6b086d5bba1a8d74b977
 		sensor->current_mode = new_mode;
 		sensor->pending_mode_change = true;
 		sensor->pending_fmt_change = true;
 	}
+	if (mbus_fmt->code != sensor->fmt.code)
+		sensor->pending_fmt_change = true;
+
 out:
 	mutex_unlock(&sensor->lock);
 	return ret;

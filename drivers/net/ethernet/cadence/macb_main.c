@@ -3467,7 +3467,15 @@ static int macb_clk_init(struct platform_device *pdev, struct clk **pclk,
 {
 	int err;
 
-	*pclk = devm_clk_get(&pdev->dev, "pclk");
+	pdata = dev_get_platdata(&pdev->dev);
+	if (pdata) {
+		*pclk = pdata->pclk;
+		*hclk = pdata->hclk;
+	} else {
+		*pclk = devm_clk_get(&pdev->dev, "pclk");
+		*hclk = devm_clk_get(&pdev->dev, "hclk");
+	}
+
 	if (IS_ERR_OR_NULL(*pclk)) {
 		err = PTR_ERR(*pclk);
 		if (!err)
@@ -3477,7 +3485,6 @@ static int macb_clk_init(struct platform_device *pdev, struct clk **pclk,
 		return err;
 	}
 
-	*hclk = devm_clk_get(&pdev->dev, "hclk");
 	if (IS_ERR_OR_NULL(*hclk)) {
 		err = PTR_ERR(*hclk);
 		if (!err)
